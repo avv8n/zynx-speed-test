@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nyro's Test Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Orbitron', sans-serif; }
+  body { background: #111; color: #eee; min-height: 100vh; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+  h1 { margin-bottom: 20px; text-align: center; color: #fff; text-shadow: 0 0 10px #aaa; }
+
+  .btn { 
+    background: #222; 
+    color: #eee; 
+    border: 2px solid #555; 
+    padding: 15px 30px; 
+    margin: 10px; 
+    font-size: 18px; 
+    cursor: pointer; 
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+  .btn:hover { background: #333; transform: scale(1.05); border-color: #aaa; }
+
+  .section { 
+    display: none; 
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: #1a1a1a; 
+    padding: 30px; 
+    border-radius: 15px; 
+    width: 90%; 
+    max-width: 500px;
+    box-shadow: 0 0 20px #000; 
+    animation: fadeIn 0.5s forwards; 
+  }
+  .active { display: flex; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  #clickSurface, #spaceSurface {
+    background: #222;
+    border: 2px solid #555;
+    width: 100%;
+    height: 150px;
+    border-radius: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.2s ease;
+  }
+  #clickSurface:hover, #spaceSurface:hover { background: #333; }
+
+  .popup {
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+  }
+  .popupContent {
+    background: #222;
+    padding: 20px 30px;
+    border-radius: 15px;
+    text-align: center;
+    position: relative;
+    animation: popupAnim 0.3s ease-out;
+  }
+  @keyframes popupAnim { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .popupContent span { display: block; margin: 10px 0; font-size: 20px; }
+  .closePopup {
+    position: absolute;
+    top: 10px; right: 15px;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+  }
+  .stars { color: gold; font-size: 24px; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<h1>Nyro's Test Hub</h1>
+
+<!-- Home Screen -->
+<div id="home" class="section active">
+  <button class="btn" onclick="showSection('clickTest')">Click Speed Test</button>
+  <button class="btn" onclick="showSection('spaceTest')">Spacebar Test</button>
+  <button class="btn" onclick="showSection('pingTest')">Ping Test</button>
+</div>
+
+<!-- Click Speed Test -->
+<div id="clickTest" class="section">
+  <button class="btn" onclick="showSection('home')">Back</button>
+  <span id="clickInfo">Click as fast as you can in 5 seconds!</span>
+  <span id="timer">Time: 5.0s</span>
+  <span id="clickCountDisplay">Clicks: 0</span>
+  <div id="clickSurface">CLICK ME!</div>
+</div>
+
+<!-- Spacebar Test -->
+<div id="spaceTest" class="section">
+  <button class="btn" onclick="showSection('home')">Back</button>
+  <span id="spaceInfo">Press space as fast as you can in 5 seconds!</span>
+  <span id="spaceTimer">Time: 5.0s</span>
+  <span id="spaceCountDisplay">Presses: 0</span>
+  <div id="spaceSurface">PRESS SPACE!</div>
+</div>
+
+<!-- Ping Test -->
+<div id="pingTest" class="section">
+  <button class="btn" onclick="showSection('home')">Back</button>
+  <button class="btn" id="pingBtn">Test Ping</button>
+  <div id="pingResult"></div>
+</div>
+
+<!-- Popup -->
+<div class="popup" id="resultPopup">
+  <div class="popupContent">
+    <div class="closePopup" onclick="closePopup()">X</div>
+    <span id="popupMessage"></span>
+    <div class="stars" id="popupStars"></div>
+  </div>
+</div>
+
+<script>
+  // --- Navigation ---
+  function showSection(sectionId){
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+  }
+
+  // --- Click Speed Test ---
+  const clickSurface = document.getElementById('clickSurface');
+  const clickCountDisplay = document.getElementById('clickCountDisplay');
+  const timerDisplay = document.getElementById('timer');
+  const resultPopup = document.getElementById('resultPopup');
+  const popupMessage = document.getElementById('popupMessage');
+  const popupStars = document.getElementById('popupStars');
+
+  let clickCount = 0, clickTimeLeft = 5.0, clickTimerRunning = false;
+
+  clickSurface.addEventListener('click', () => {
+    if(!clickTimerRunning){
+      clickTimerRunning = true;
+      clickCount = 0;
+      clickTimeLeft = 5.0;
+      clickCountDisplay.textContent = `Clicks: 0`;
+
+      const interval = setInterval(() => {
+        clickTimeLeft -= 0.1;
+        timerDisplay.textContent = `Time: ${clickTimeLeft.toFixed(1)}s`;
+        if(clickTimeLeft <= 0){
+          clearInterval(interval);
+          clickTimerRunning = false;
+          showClickResult();
+        }
+      }, 100);
+    }
+    if(clickTimerRunning){
+      clickCount++;
+      clickCountDisplay.textContent = `Clicks: ${clickCount}`;
+    }
+  });
+
+  function showClickResult(){
+    // Dynamic animals based on real speed and click thresholds
+    let animal = '';
+    if(clickCount <= 10) animal = 'a snail';
+    else if(clickCount <= 20) animal = 'a turtle';
+    else if(clickCount <= 30) animal = 'a rabbit';
+    else if(clickCount <= 40) animal = 'a dog';
+    else if(clickCount <= 50) animal = 'a horse';
+    else if(clickCount <= 60) animal = 'a cheetah';
+    else if(clickCount <= 70) animal = 'a falcon';
+    else if(clickCount <= 80) animal = 'a sailfish';
+    else animal = 'a lightning-fast human';
+
+    let stars = Math.min(5, Math.floor(clickCount / 10));
+    popupMessage.textContent = `You clicked ${clickCount} times! You are faster than ${animal}!`;
+    popupStars.textContent = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+    resultPopup.style.display = 'flex';
+  }
+
+  function closePopup(){
+    resultPopup.style.display = 'none';
+  }
+
+  // --- Spacebar Test ---
+  const spaceSurface = document.getElementById('spaceSurface');
+  const spaceCountDisplay = document.getElementById('spaceCountDisplay');
+  const spaceTimerDisplay = document.getElementById('spaceTimer');
+
+  let spaceCount = 0, spaceTimeLeft = 5.0, spaceTimerRunning = false;
+
+  window.addEventListener('keydown', e => {
+    if(e.code === 'Space'){
+      e.preventDefault();
+      if(!spaceTimerRunning){
+        spaceTimerRunning = true;
+        spaceCount = 0;
+        spaceTimeLeft = 5.0;
+        spaceCountDisplay.textContent = `Presses: 0`;
+
+        const interval = setInterval(() => {
+          spaceTimeLeft -= 0.1;
+          spaceTimerDisplay.textContent = `Time: ${spaceTimeLeft.toFixed(1)}s`;
+          if(spaceTimeLeft <= 0){
+            clearInterval(interval);
+            spaceTimerRunning = false;
+            showSpaceResult();
+          }
+        }, 100);
+      }
+      if(spaceTimerRunning){
+        spaceCount++;
+        spaceCountDisplay.textContent = `Presses: ${spaceCount}`;
+      }
+    }
+  });
+
+  function showSpaceResult(){
+    popupMessage.textContent = `You pressed space ${spaceCount} times!`;
+    let stars = Math.min(5, Math.floor(spaceCount / 10));
+    popupStars.textContent = '★'.repeat(stars) + '☆'.repeat(5 - stars);
+    resultPopup.style.display = 'flex';
+  }
+
+  // --- Ping Test ---
+  const pingBtn = document.getElementById('pingBtn');
+  const pingResult = document.getElementById('pingResult');
+  pingBtn.addEventListener('click', async () => {
+    pingResult.textContent = 'Pinging...';
+    const start = performance.now();
+    try{
+      await fetch('https://api.github.com');
+      const end = performance.now();
+      pingResult.textContent = `Ping: ${Math.round(end-start)} ms`;
+    } catch(err){
+      pingResult.textContent = 'Ping failed';
+    }
+  });
+</script>
+</body>
+</html>
